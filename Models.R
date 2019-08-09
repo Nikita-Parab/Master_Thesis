@@ -20,17 +20,17 @@ train <- rbind(ferguson,german,ottawa,sydneysiege)
 test <- charlie
 
 #converting to factors
-train$status <- factor(train$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
-test$status <- factor(test$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
+train$status <- factor(train$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
+test$status <- factor(test$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
 
 #Support Vector Machine
 fit.imp <- caret::train(status~., data = train, method = "svmRadial", metric = "Accuracy")
 pred.imp <- predict(fit.imp, test)
 imptab <- table(pred.imp, test$status)
-impc <-confusionMatrix(svmtab)
-impp <- precision(svmtab)
-impr <- recall(svmtab)
-impf <-F_meas(svmtab)
+impc <-confusionMatrix(imptab)
+impp <- precision(imptab)
+impr <- recall(imptab)
+impf <-F_meas(imptab)
 
 
 
@@ -71,15 +71,15 @@ plot(history)
 summary(model)
 evalkeras <- model%>%evaluate(x_test,y_test)
 pred.keras <- model%>%predict_classes(x_test)
-tabkeras <- table(factor(pred.keras, levels = c(0,1)),factor(testing$status, levels = c(0,1)))
+tabkeras <- table(factor(pred.keras, levels = c(1,0)),factor(testing$status, levels = c(1,0)))
 kp <- precision(tabkeras)
 kpr <- recall(tabkeras)
 kpf <- F_meas(tabkeras)
 kpc <- confusionMatrix(tabkeras)
 
 #converting to factors
-training$status <- factor(training$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
-testing$status <- factor(testing$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
+training$status <- factor(training$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
+testing$status <- factor(testing$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
 
 #data plots
 plot <- ggplot(data = testing, mapping = aes(x =timeDiff  , y=Freq))+
@@ -87,15 +87,6 @@ plot <- ggplot(data = testing, mapping = aes(x =timeDiff  , y=Freq))+
 plot + scale_colour_manual(values = c("green","red")) + 
   labs(title = "Event : Charlie Hebdo",  x = "Time Interval", y = "Interactions")
 
-
-#Linear Discriminant Analysis
-fit.lda1 <- caret::train(status~., data = training, method = "lda", metric = "Accuracy")
-pred.lda1 <- predict(fit.lda1, testing)
-ldatab <- table(pred.lda1, testing$status)
-ldac <- confusionMatrix(ldatab)
-ldap <- precision(ldatab)
-ldar <- recall(ldatab)
-ldaf <- F_meas(ldatab)
 
 #Classification and Regression Trees (CART)
 fit.cart1 <- caret::train(status~., data = training, method = "rpart", metric = "Accuracy")
@@ -107,7 +98,8 @@ cartr <- recall(carttab)
 cartf <- F_meas(carttab)
 
 #KNN
-fit.knn1 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy")
+fit.knn1 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy",
+                         preProcess = c("center","scale"), tuneLength = 7)
 pred.knn1 <- predict(fit.knn1, testing)
 knntab <- table(pred.knn1, testing$status)
 knnc <- confusionMatrix(knntab)
@@ -130,7 +122,7 @@ gnby <- testing[,c(1,3)]
 fit.gnb1 <- Rfast::gaussian.nb(xnew = NULL, gnbx , ina = training$status)
 pred.gnb1 <- Rfast::gaussiannb.pred(gnby, fit.gnb1$mu, fit.gnb1$sigma, fit.gnb1$ni)
 gnbtab <- table(pred.gnb1, testing$status)
-rownames(gnbtab) <- c("Non-Rumor", "Rumor")
+rownames(gnbtab) <- c("Rumor","Non-Rumor" )
 gnbp <- precision(gnbtab)
 gnbr <- recall(gnbtab)
 gnbf <- F_meas(gnbtab)
@@ -161,9 +153,6 @@ results <- rbind(results, data.frame("Model" = "Gaussian Naive Bayes",
 results <- rbind(results, data.frame("Model" = "KNN",
                                      "Accuracy" = c(knnc[["overall"]][["Accuracy"]]),
                                      "Precision"=knnp,"Recall" =knnr, "F1 Score"=knnf))
-results <- rbind(results, data.frame("Model" = "LDA",
-                                     "Accuracy" = c(ldac[["overall"]][["Accuracy"]]),
-                                     "Precision"=ldap,"Recall" =ldar, "F1 Score"=ldaf))
 results <- rbind(results, data.frame("Model" = "CART",
                                      "Accuracy" = c(cartc[["overall"]][["Accuracy"]]),
                                      "Precision"=cartp,"Recall" =cartr, "F1 Score"=cartf))
@@ -215,15 +204,15 @@ plot(history)
 summary(model)
 evalkeras <- model%>%evaluate(x_test,y_test)
 pred.keras <- model%>%predict_classes(x_test)
-tabkeras <- table(factor(pred.keras, levels = c(0,1)),factor(testing$status, levels = c(0,1)))
+tabkeras <- table(factor(pred.keras, levels = c(1,0)),factor(testing$status, levels = c(1,0)))
 kp <- precision(tabkeras)
 kpr <- recall(tabkeras)
 kpf <- F_meas(tabkeras)
 kpc <- confusionMatrix(tabkeras)
 
 #converting to factors
-training$status <- factor(training$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
-testing$status <- factor(testing$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
+training$status <- factor(training$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
+testing$status <- factor(testing$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
 
 graph <- testing[c(-1,-2990),]
 #data plots
@@ -231,16 +220,6 @@ plot <- ggplot(data = graph, mapping = aes(x = timeDiff, y=Freq))+
   geom_line(aes(color = status))
 plot + scale_colour_manual(values = c("green","red")) + 
   labs(title = "Event: Ferguson",  x = "Time Interval", y = "Interactions")
-
-
-#Linear Discriminant Analysis
-fit.lda2 <- caret::train(status~., data = training, method = "lda", metric = "Accuracy")
-pred.lda2 <- predict(fit.lda2, testing)
-ldatab <- table(pred.lda2, testing$status)
-ldac <- confusionMatrix(ldatab)
-ldap <- precision(ldatab)
-ldar <- recall(ldatab)
-ldaf <- F_meas(ldatab)
 
 
 #Classification and Regression Trees (CART)
@@ -253,7 +232,8 @@ cartr <- recall(carttab)
 cartf <- F_meas(carttab)
 
 #KNN
-fit.knn2 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy")
+fit.knn2 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy",
+                         preProcess = c("center","scale"), tuneLength = 7)
 pred.knn2 <- predict(fit.knn2, testing)
 knntab <- table(pred.knn2, testing$status)
 knnc <- confusionMatrix(knntab)
@@ -276,7 +256,7 @@ gnby <- testing[,c(1,3)]
 fit.gnb2 <- Rfast::gaussian.nb(xnew = NULL, gnbx , ina = training$status)
 pred.gnb2 <- Rfast::gaussiannb.pred(gnby, fit.gnb2$mu, fit.gnb2$sigma, fit.gnb2$ni)
 gnbtab <- table(pred.gnb2, testing$status)
-rownames(gnbtab) <- c("Non-Rumor", "Rumor")
+rownames(gnbtab) <- c("Rumor","Non-Rumor" )
 gnbp <- precision(gnbtab)
 gnbr <- recall(gnbtab)
 gnbf <- F_meas(gnbtab)
@@ -304,9 +284,6 @@ results <- rbind(results, data.frame("Model" = "Gaussian Naive Bayes",
 results <- rbind(results, data.frame("Model" = "KNN",
                                      "Accuracy" = c(knnc[["overall"]][["Accuracy"]]),
                                      "Precision"=knnp,"Recall" =knnr, "F1 Score"=knnf))
-results <- rbind(results, data.frame("Model" = "LDA",
-                                     "Accuracy" = c(ldac[["overall"]][["Accuracy"]]),
-                                     "Precision"=ldap,"Recall" =ldar, "F1 Score"=ldaf))
 results <- rbind(results, data.frame("Model" = "CART",
                                      "Accuracy" = c(cartc[["overall"]][["Accuracy"]]),
                                      "Precision"=cartp,"Recall" =cartr, "F1 Score"=cartf))
@@ -354,31 +331,21 @@ plot(history)
 summary(model)
 evalkeras <- model%>%evaluate(x_test,y_test)
 pred.keras <- model%>%predict_classes(x_test)
-tabkeras <- table(factor(pred.keras, levels = c(0,1)),factor(testing$status, levels = c(0,1)))
+tabkeras <- table(factor(pred.keras, levels = c(1,0)),factor(testing$status, levels = c(1,0)))
 kp <- precision(tabkeras)
 kpr <- recall(tabkeras)
 kpf <- F_meas(tabkeras)
 kpc <- confusionMatrix(tabkeras)
 
 #converting to factors
-training$status <- factor(training$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
-testing$status <- factor(testing$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
+training$status <- factor(training$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
+testing$status <- factor(testing$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
 
 #data plots
 plot <- ggplot(data = testing, mapping = aes(x = timeDiff, y=Freq))+
   geom_line(aes(color = status))
 plot + scale_colour_manual(values = c("green","red")) + 
   labs(title = "Event: German Wings",  x = "Time Interval", y = "Interactions")
-
-
-#Linear Discriminant Analysis
-fit.lda3 <- caret::train(status~., data = training, method = "lda", metric = "Accuracy")
-pred.lda3 <- predict(fit.lda3, testing)
-ldatab <- table(pred.lda3, testing$status)
-ldac <- confusionMatrix(ldatab)
-ldap <- precision(ldatab)
-ldar <- recall(ldatab)
-ldaf <- F_meas(ldatab)
 
 
 #Classification and Regression Trees (CART)
@@ -391,7 +358,8 @@ cartr <- recall(carttab)
 cartf <- F_meas(carttab)
 
 #KNN
-fit.knn3 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy")
+fit.knn3 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy",
+                         preProcess = c("center","scale"), tuneLength = 7)
 pred.knn3 <- predict(fit.knn3, testing)
 knntab <- table(pred.knn3, testing$status)
 knnc <- confusionMatrix(knntab)
@@ -414,7 +382,7 @@ gnby <- testing[,c(1,3)]
 fit.gnb3 <- Rfast::gaussian.nb(xnew = NULL, gnbx , ina = training$status)
 pred.gnb3 <- Rfast::gaussiannb.pred(gnby, fit.gnb3$mu, fit.gnb3$sigma, fit.gnb3$ni)
 gnbtab <- table(pred.gnb3, testing$status)
-rownames(gnbtab) <- c("Non-Rumor", "Rumor")
+rownames(gnbtab) <- c("Rumor","Non-Rumor" )
 gnbp <- precision(gnbtab)
 gnbr <- recall(gnbtab)
 gnbf <- F_meas(gnbtab)
@@ -442,9 +410,6 @@ results <- rbind(results, data.frame("Model" = "Gaussian Naive Bayes",
 results <- rbind(results, data.frame("Model" = "KNN",
                                      "Accuracy" = c(knnc[["overall"]][["Accuracy"]]),
                                      "Precision"=knnp,"Recall" =knnr, "F1 Score"=knnf))
-results <- rbind(results, data.frame("Model" = "LDA",
-                                     "Accuracy" = c(ldac[["overall"]][["Accuracy"]]),
-                                     "Precision"=ldap,"Recall" =ldar, "F1 Score"=ldaf))
 results <- rbind(results, data.frame("Model" = "CART",
                                      "Accuracy" = c(cartc[["overall"]][["Accuracy"]]),
                                      "Precision"=cartp,"Recall" =cartr, "F1 Score"=cartf))
@@ -491,31 +456,21 @@ plot(history)
 summary(model)
 evalkeras <- model%>%evaluate(x_test,y_test)
 pred.keras <- model%>%predict_classes(x_test)
-tabkeras <- table(factor(pred.keras, levels = c(0,1)),factor(testing$status, levels = c(0,1)))
+tabkeras <- table(factor(pred.keras, levels = c(1,0)),factor(testing$status, levels = c(1,0)))
 kp <- precision(tabkeras)
 kpr <- recall(tabkeras)
 kpf <- F_meas(tabkeras)
 kpc <- confusionMatrix(tabkeras)
 
 #converting to factors
-training$status <- factor(training$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
-testing$status <- factor(testing$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
+training$status <- factor(training$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
+testing$status <- factor(testing$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
 
 #data plots
 plot <- ggplot(data = testing, mapping = aes(x = timeDiff, y=Freq))+
   geom_line(aes(color = status))
 plot + scale_colour_manual(values = c("green","red")) + 
   labs(title = " mins interval",  x = "Time Interval", y = "Interactions")
-
-
-#Linear Discriminant Analysis
-fit.lda4 <- caret::train(status~., data = training, method = "lda", metric = "Accuracy")
-pred.lda4 <- predict(fit.lda4, testing)
-ldatab <- table(pred.lda4, testing$status)
-ldac <- confusionMatrix(ldatab)
-ldap <- precision(ldatab)
-ldar <- recall(ldatab)
-ldaf <- F_meas(ldatab)
 
 
 #Classification and Regression Trees (CART)
@@ -528,7 +483,8 @@ cartr <- recall(carttab)
 cartf <- F_meas(carttab)
 
 #KNN
-fit.knn4 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy")
+fit.knn4 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy",
+                         preProcess = c("center","scale"), tuneLength = 7)
 pred.knn4 <- predict(fit.knn4, testing)
 knntab <- table(pred.knn4, testing$status)
 knnc <- confusionMatrix(knntab)
@@ -550,8 +506,9 @@ gnbx <- as.matrix(training[,c(1,3)])
 gnby <- testing[,c(1,3)]
 fit.gnb4 <- Rfast::gaussian.nb(xnew = NULL, gnbx , ina = training$status)
 pred.gnb4 <- Rfast::gaussiannb.pred(gnby, fit.gnb4$mu, fit.gnb4$sigma, fit.gnb4$ni)
-gnbtab <- table(pred.gnb4, testing$status)
-rownames(gnbtab) <- c("Non-Rumor", "Rumor")
+pred.gnb4 <- factor(pred.gnb4, levels = 1, labels = "Rumor")
+u <- union(pred.gnb4, testing$status)
+gnbtab <- table(factor(pred.gnb4,u), factor(testing$status,u))
 gnbp <- precision(gnbtab)
 gnbr <- recall(gnbtab)
 gnbf <- F_meas(gnbtab)
@@ -579,9 +536,6 @@ results <- rbind(results, data.frame("Model" = "Gaussian Naive Bayes",
 results <- rbind(results, data.frame("Model" = "KNN",
                                      "Accuracy" = c(knnc[["overall"]][["Accuracy"]]),
                                      "Precision"=knnp,"Recall" =knnr, "F1 Score"=knnf))
-results <- rbind(results, data.frame("Model" = "LDA",
-                                     "Accuracy" = c(ldac[["overall"]][["Accuracy"]]),
-                                     "Precision"=ldap,"Recall" =ldar, "F1 Score"=ldaf))
 results <- rbind(results, data.frame("Model" = "CART",
                                      "Accuracy" = c(cartc[["overall"]][["Accuracy"]]),
                                      "Precision"=cartp,"Recall" =cartr, "F1 Score"=cartf))
@@ -631,31 +585,21 @@ plot(history)
 summary(model)
 evalkeras <- model%>%evaluate(x_test,y_test)
 pred.keras <- model%>%predict_classes(x_test)
-tabkeras <- table(factor(pred.keras, levels = c(0,1)),factor(testing$status, levels = c(0,1)))
+tabkeras <- table(factor(pred.keras, levels = c(1,0)),factor(testing$status, levels = c(1,0)))
 kp <- precision(tabkeras)
 kpr <- recall(tabkeras)
 kpf <- F_meas(tabkeras)
 kpc <- confusionMatrix(tabkeras)
 
 #converting to factors
-training$status <- factor(training$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
-testing$status <- factor(testing$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
+training$status <- factor(training$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
+testing$status <- factor(testing$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
 
 #data plots
 plot <- ggplot(data = testing, mapping = aes(x = timeDiff, y=Freq))+
   geom_line(aes(color = status))
 plot + scale_colour_manual(values = c("green","red")) + 
   labs(title = "Event: Ottawa Shooting",  x = "Time Interval", y = "Interactions")
-
-
-#Linear Discriminant Analysis
-fit.lda5 <- caret::train(status~., data = training, method = "lda", metric = "Accuracy")
-pred.lda5 <- predict(fit.lda5, testing)
-ldatab <- table(pred.lda5, testing$status)
-ldac <- confusionMatrix(ldatab)
-ldap <- precision(ldatab)
-ldar <- recall(ldatab)
-ldaf <- F_meas(ldatab)
 
 
 #Classification and Regression Trees (CART)
@@ -668,7 +612,8 @@ cartr <- recall(carttab)
 cartf <- F_meas(carttab)
 
 #KNN
-fit.knn5 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy")
+fit.knn5 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy",
+                         preProcess = c("center","scale"), tuneLength = 7)
 pred.knn5 <- predict(fit.knn5, testing)
 knntab <- table(pred.knn5, testing$status)
 knnc <- confusionMatrix(knntab)
@@ -691,7 +636,7 @@ gnby <- testing[,c(1,3)]
 fit.gnb5 <- Rfast::gaussian.nb(xnew = NULL, gnbx , ina = training$status)
 pred.gnb5 <- Rfast::gaussiannb.pred(gnby, fit.gnb5$mu, fit.gnb5$sigma, fit.gnb5$ni)
 gnbtab <- table(pred.gnb5, testing$status)
-rownames(gnbtab) <- c("Non-Rumor", "Rumor")
+rownames(gnbtab) <- c("Rumor","Non-Rumor" )
 gnbp <- precision(gnbtab)
 gnbr <- recall(gnbtab)
 gnbf <- F_meas(gnbtab)
@@ -720,9 +665,6 @@ results <- rbind(results, data.frame("Model" = "Gaussian Naive Bayes",
 results <- rbind(results, data.frame("Model" = "KNN",
                                      "Accuracy" = c(knnc[["overall"]][["Accuracy"]]),
                                      "Precision"=knnp,"Recall" =knnr, "F1 Score"=knnf))
-results <- rbind(results, data.frame("Model" = "LDA",
-                                     "Accuracy" = c(ldac[["overall"]][["Accuracy"]]),
-                                     "Precision"=ldap,"Recall" =ldar, "F1 Score"=ldaf))
 results <- rbind(results, data.frame("Model" = "CART",
                                      "Accuracy" = c(cartc[["overall"]][["Accuracy"]]),
                                      "Precision"=cartp,"Recall" =cartr, "F1 Score"=cartf))
@@ -769,31 +711,21 @@ plot(history)
 summary(model)
 evalkeras <- model%>%evaluate(x_test,y_test)
 pred.keras <- model%>%predict_classes(x_test)
-tabkeras <- table(factor(pred.keras, levels = c(0,1)),factor(testing$status, levels = c(0,1)))
+tabkeras <- table(factor(pred.keras, levels = c(1,0)),factor(testing$status, levels = c(1,0)))
 kp <- precision(tabkeras)
 kpr <- recall(tabkeras)
 kpf <- F_meas(tabkeras)
 kpc <- confusionMatrix(tabkeras)
 
 #converting to factors
-training$status <- factor(training$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
-testing$status <- factor(testing$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
+training$status <- factor(training$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
+testing$status <- factor(testing$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
 
 #data plots
 plot <- ggplot(data = testing, mapping = aes(x = timeDiff, y=Freq))+
   geom_line(aes(color = status))
 plot + scale_colour_manual(values = c("green","red")) + 
   labs(title = "Event: Putin Missing",  x = "Time Interval", y = "Interactions")
-
-
-#Linear Discriminant Analysis
-fit.lda6 <- caret::train(status~., data = training, method = "lda", metric = "Accuracy")
-pred.lda6 <- predict(fit.lda6, testing)
-ldatab <- table(pred.lda6, testing$status)
-ldac <- confusionMatrix(ldatab)
-ldap <- precision(ldatab)
-ldar <- recall(ldatab)
-ldaf <- F_meas(ldatab)
 
 
 #Classification and Regression Trees (CART)
@@ -806,7 +738,8 @@ cartr <- recall(carttab)
 cartf <- F_meas(carttab)
 
 #KNN
-fit.knn6 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy")
+fit.knn6 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy",
+                         preProcess = c('center','scale'), tuneLength = 7)
 pred.knn6 <- predict(fit.knn6, testing)
 knntab <- table(pred.knn6, testing$status)
 knnc <- confusionMatrix(knntab)
@@ -828,8 +761,9 @@ gnbx <- as.matrix(training[,c(1,3)])
 gnby <- testing[,c(1,3)]
 fit.gnb6 <- Rfast::gaussian.nb(xnew = NULL, gnbx , ina = training$status)
 pred.gnb6 <- Rfast::gaussiannb.pred(gnby, fit.gnb6$mu, fit.gnb6$sigma, fit.gnb6$ni)
-gnbtab <- table(pred.gnb6, testing$status)
-rownames(gnbtab) <- c("Non-Rumor", "Rumor")
+pred.gnb6 <- factor(pred.gnb6, levels = 1, labels = "Rumor")
+u <- union(pred.gnb6, testing$status)
+gnbtab <- table(factor(pred.gnb6,u), factor(testing$status,u))
 gnbp <- precision(gnbtab)
 gnbr <- recall(gnbtab)
 gnbf <- F_meas(gnbtab)
@@ -857,9 +791,6 @@ results <- rbind(results, data.frame("Model" = "Gaussian Naive Bayes",
 results <- rbind(results, data.frame("Model" = "KNN",
                                      "Accuracy" = c(knnc[["overall"]][["Accuracy"]]),
                                      "Precision"=knnp,"Recall" =knnr, "F1 Score"=knnf))
-results <- rbind(results, data.frame("Model" = "LDA",
-                                     "Accuracy" = c(ldac[["overall"]][["Accuracy"]]),
-                                     "Precision"=ldap,"Recall" =ldar, "F1 Score"=ldaf))
 results <- rbind(results, data.frame("Model" = "CART",
                                      "Accuracy" = c(cartc[["overall"]][["Accuracy"]]),
                                      "Precision"=cartp,"Recall" =cartr, "F1 Score"=cartf))
@@ -909,31 +840,22 @@ plot(history)
 summary(model)
 evalkeras <- model%>%evaluate(x_test,y_test)
 pred.keras <- model%>%predict_classes(x_test)
-tabkeras <- table(factor(pred.keras, levels = c(0,1)),factor(testing$status, levels = c(0,1)))
+tabkeras <- table(factor(pred.keras, levels = c(1,0)),factor(testing$status, levels = c(1,0)))
 kp <- precision(tabkeras)
 kpr <- recall(tabkeras)
 kpf <- F_meas(tabkeras)
 kpc <- confusionMatrix(tabkeras)
 
 #converting to factors
-training$status <- factor(training$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
-testing$status <- factor(testing$status, levels = c(0,1), labels = c("Non-Rumor", "Rumor"))
+training$status <- factor(training$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
+testing$status <- factor(testing$status, levels = c(1,0), labels = c("Rumor","Non-Rumor"))
+
 
 #data plots
 plot <- ggplot(data = testing, mapping = aes(x = timeDiff, y=Freq))+
   geom_line(aes(color = status))
 plot + scale_colour_manual(values = c("green","red")) + 
   labs(title = "Event: Sydney Siege",  x = "Time Interval", y = "Interactions")
-
-
-#Linear Discriminant Analysis
-fit.lda7 <- caret::train(status~., data = training, method = "lda", metric = "Accuracy")
-pred.lda7 <- predict(fit.lda7, testing)
-ldatab <- table(pred.lda7, testing$status)
-ldac <- confusionMatrix(ldatab)
-ldap <- precision(ldatab)
-ldar <- recall(ldatab)
-ldaf <- F_meas(ldatab)
 
 
 #Classification and Regression Trees (CART)
@@ -946,7 +868,8 @@ cartr <- recall(carttab)
 cartf <- F_meas(carttab)
 
 #KNN
-fit.knn7 <- caret::train(status~., data = training, method = "knn", metric = "Accuracy")
+fit.knn7 <-caret::train(status~., data = training, method = "knn", metric = "Accuracy",
+                        preProcess = c('center','scale'), tuneLength = 7)
 pred.knn7 <- predict(fit.knn7, testing)
 knntab <- table(pred.knn7, testing$status)
 knnc <- confusionMatrix(knntab)
@@ -969,7 +892,7 @@ gnby <- testing[,c(1,3)]
 fit.gnb7 <- Rfast::gaussian.nb(xnew = NULL, gnbx , ina = training$status)
 pred.gnb7 <- Rfast::gaussiannb.pred(gnby, fit.gnb7$mu, fit.gnb7$sigma, fit.gnb7$ni)
 gnbtab <- table(pred.gnb7, testing$status)
-rownames(gnbtab) <- c("Non-Rumor", "Rumor")
+rownames(gnbtab) <- c("Rumor","Non-Rumor" )
 gnbp <- precision(gnbtab)
 gnbr <- recall(gnbtab)
 gnbf <- F_meas(gnbtab)
@@ -997,9 +920,6 @@ results <- rbind(results, data.frame("Model" = "Gaussian Naive Bayes",
 results <- rbind(results, data.frame("Model" = "KNN",
                                      "Accuracy" = c(knnc[["overall"]][["Accuracy"]]),
                                      "Precision"=knnp,"Recall" =knnr, "F1 Score"=knnf))
-results <- rbind(results, data.frame("Model" = "LDA",
-                                     "Accuracy" = c(ldac[["overall"]][["Accuracy"]]),
-                                     "Precision"=ldap,"Recall" =ldar, "F1 Score"=ldaf))
 results <- rbind(results, data.frame("Model" = "CART",
                                      "Accuracy" = c(cartc[["overall"]][["Accuracy"]]),
                                      "Precision"=cartp,"Recall" =cartr, "F1 Score"=cartf))
